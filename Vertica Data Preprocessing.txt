@@ -1,0 +1,128 @@
+-- Preprocessing SQL
+
+-- Creating Initial table that the downloaded data will be loaded into.
+-- sopra.pollution_data is the initial data loaded from the web
+
+DROP TABLE IF EXISTS sopra.clean_pollution_data;
+
+CREATE TABLE IF NOT EXISTS sopra.clean_pollution_data 
+	AS (select DENSE_RANK() 
+		OVER (
+			ORDER BY
+			 concat(longitude, latitude))
+		as sensor_id, * 
+		from sopra.pollution_data ORDER BY LONGITUDE, LATITUDE);
+
+--  following Chunk ensures that no duplicates have found there way into the dataset. 
+
+DROP TABLE IF EXISTS sopra.pollution_data_distinct;
+
+CREATE TABLE IF NOT EXISTS sopra.pollution_data_distinct AS
+	(SELECT DISTINCT * from sopra.clean_pollution_data)
+		ORDER BY
+		 sensor_id, timestamp;
+
+DROP TABLE IF EXISTS sopra.clean_pollution_data;
+
+SELECT * FROM sopra.pollution_data_distinct;
+
+-- following chunk takes time lagged value of the observation to act as predictive features. Also takes several timestamp values to assist in predictive analytics.
+
+DROP TABLE IF EXISTS sopra.preprossing1;
+
+
+
+CREATE TABLE IF NOT EXISTS sopra.preprossing1 AS 
+SELECT sensor_id,
+timestamp,
+DENSE_RANK() OVER( ORDER BY (CONCAT(sensor_id,timestamp))) as rank,
+Ozone,
+CAST(lag(ozone,288,0) OVER(PARTITION BY sensor_id ORDER BY timestamp)AS INT) as temp24,
+CAST(lag(ozone,576,0) OVER(PARTITION BY sensor_id ORDER BY timestamp)AS INT) as temp48,
+CAST(lag(ozone,2016,0) OVER(PARTITION BY sensor_id ORDER BY timestamp)AS INT) as temp168,
+DAY(timestamp) AS DayOfMonth,
+DAYOFWEEK(timestamp) AS Weekday,
+Hour(timestamp) AS Hour,
+Month(timestamp) AS Month
+from sopra.pollution_data_distinct
+order by rank;
+
+SELECT * FROM sopra.preprossing1;
+
+DROP TABLE IF EXISTS sopra.pollution_data_distinct;
+
+-- Following Chunk removes all zero time lagged values which would skew any machine learning model
+
+DROP TABLE IF EXISTS sopra.preprossing2;
+
+Create Table IF NOT EXISTS sopra.preprossing2 AS SELECT *
+from sopra.preprossing1
+where temp24 != 0 and temp48 !=0 and temp168!=0;
+
+DROP TABLE IF EXISTS sopra.preprossing1;
+
+--following chunk normalised all time lagged values. Normalising assists with predictive analytics by making the STD.Dev of the data set 1.
+
+DROP Model IF EXISTS Normalisation_Fit;
+
+SELECT NORMALIZE_FIT('Normalisation_Fit', 'sopra.preprossing2', 'Ozone, temp24, temp48, temp168','minmax');
+
+DROP TABLE IF EXISTS sopra.preprocessing_post_normal;
+
+CREATE TABLE IF NOT EXISTS sopra.preprocessing_post_normal AS SELECT APPLY_NORMALIZE (* USING PARAMETERS model_name = 'Normalisation_Fit') FROM sopra.preprossing2;
+
+SELECT * FROM sopra.preprocessing_post_normal;
+
+DROP TABLE IF EXISTS sopra.preprossing2;
+
+/*
+--Following Code Chunk applies a preprocessing step to the data required for certain algoriths. For ease of usecase, this has been temporaliry removed.
+
+DROP Model IF EXISTS OHE_Fit;
+
+SELECT ONE_HOT_ENCODER_FIT('OHE_Fit', 'sopra.preprocessing_post_normal', 'DayOfMonth, Weekday2, Hour, Month');
+
+DROP TABLE IF EXISTS sopra.preprocessing_post_OHE;
+
+CREATE TABLE IF NOT EXISTS sopra.preprocessing_post_OHE AS SELECT 
+APPLY_ONE_HOT_ENCODER( * USING PARAMETERS model_name='OHE_Fit')FROM sopra.preprocessing_post_normal;
+
+SELECT * FROM sopra.preprocessing_post_OHE;
+
+DROP TABLE IF EXISTS sopra.preprocessing_post_normal;
+
+*/
+
+--chunk contains a new create table query that is unsegmented allowing for it to be easily segmented
+DROP TABLE IF EXISTS sopra.preprocessing_post_OHE2;
+
+CREATE TABLE IF NOT EXISTS sopra.preprocessing_post_OHE2 as
+(select * from sopra.preprocessing_post_normal )
+UNSEGMENTED ALL NODES;
+
+
+
+
+DROP TABLE IF EXISTS sopra.preprocessing_post_OHE;
+
+/*
+
+ALTER TABLE sopra.preprocessing_post_OHE2
+DROP DayOfMonth CASCADE;
+
+ALTER TABLE sopra.preprocessing_post_OHE2
+DROP Weekday CASCADE;
+
+ALTER TABLE sopra.preprocessing_post_OHE2
+DROP Hour CASCADE;
+
+ALTER TABLE sopra.preprocessing_post_OHE2
+DROP Month CASCADE;
+
+SELECT * FROM sopra.preprocessing_post_OHE2;
+
+*/
+
+
+
+
