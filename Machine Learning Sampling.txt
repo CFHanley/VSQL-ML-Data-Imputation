@@ -21,10 +21,13 @@ FROM sopra.Balanced_trainsample;
 SELECT * FROM sopra.Train;
 
 SELECT RF_REGRESSOR('RF_reg', 'sopra.Train', 'ozone', 'sensor_id,temp24,temp48,temp168,DayOfMonth,Weekday,Hour,Month'
-      USING PARAMETERS 
+      USING PARAMETERS
                    min_info_gain = 0.001,
                    ntree=20,
                    max_depth= 100,
                    max_breadth=1000);
 
 SELECT GET_MODEL_SUMMARY (USING PARAMETERS model_name='RF_reg');
+
+
+asas
