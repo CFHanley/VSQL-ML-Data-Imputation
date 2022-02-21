@@ -1,4 +1,5 @@
--- Vertica SQL Machine Learning
+-- Vertica SQL Machine Learning (Test1 meh)
+--test2 mehasdasd
 
 DROP TABLE IF EXISTS sopra.trainsample;
 DROP TABLE IF EXISTS sopra.testsample;
