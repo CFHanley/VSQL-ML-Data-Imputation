@@ -1,26 +1,38 @@
-SELECT *  FROM sopra.pred;
-
-SELECT * FROM sopra.preprocessing_post_OHE2 ;
-
-SELECT sopra.preprocessing_post_OHE2.*, sopra.pred.Round,sopra.pred.imputated
-FROM sopra.preprocessing_post_OHE2 LEFT JOIN sopra.pred ON sopra.pred.rank = sopra.preprocessing_post_OHE2.rank;
+/* This Segment is joing the prediction onto the orgional dataaset.
+In a real example. the join or append would be highly dependant on the
+use case. The current solution works for the current use case.
+.*/
 
 DROP TABLE IF EXISTS sopra.final;
 
 CREATE TABLE IF NOT EXISTS sopra.final
-	AS (SELECT sopra.preprocessing_post_OHE2.*, sopra.pred.Round,sopra.pred.imputated
-   FROM sopra.preprocessing_post_OHE2 LEFT JOIN sopra.pred ON sopra.pred.rank = sopra.preprocessing_post_OHE2.rank);
+	AS
+	(SELECT sopra.preprocessing_post_OHE2.*,
+		 sopra.pred.Round,sopra.pred.imputated
+   FROM sopra.preprocessing_post_OHE2
+	  LEFT JOIN
+	  sopra.pred ON sopra.pred.rank = sopra.preprocessing_post_OHE2.rank);
 
 	 SELECT * FROM sopra.final;
 
-	 UPDATE sopra.final
-	 SET Ozone = CASE WHEN final.imputated IS NULL THEN Ozone
-	 ELSE round END ;
 
-	 SELECT * FROM sopra.final;
+ /* This Segment is overwriting predictive datapoints over the actual
+  datapoints.In a real case it would be overwriting errors or Nulls most likely.
+	.*/
 
-	 DROP TABLE IF EXISTS sopra.export;
+UPDATE sopra.final
+SET Ozone = CASE WHEN final.imputated IS NULL THEN Ozone
+ELSE round END ;
 
-	 Create TABLE IF NOT EXISTS sopra.export as (SELECT REVERSE_NORMALIZE (Sensor_id, timestamp, imputated, Ozone USING PARAMETERS  model_name = 'Normalisation_Fit') FROM sopra.final);
+DROP TABLE IF EXISTS sopra.export;
 
-	 SELECT * FROM sopra.export;
+
+/* This Segment is applying REVERSE_NORMALIZE to undo the
+ NORMALIZE_FIT applied in section 3. This turns the Co2 data back into
+ human readable formatting for analysis and visualisation. 
+ .*/
+Create TABLE IF NOT EXISTS sopra.export as
+	(SELECT REVERSE_NORMALIZE
+		(Sensor_id, timestamp, imputated, Ozone
+			USING PARAMETERS  model_name = 'Normalisation_Fit')
+			FROM sopra.final);

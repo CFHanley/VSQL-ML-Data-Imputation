@@ -1,7 +1,7 @@
--- Preprocessing SQL
+/* Preprocessing SQL
 
--- Creating Initial table that the downloaded data will be loaded into.
--- sopra.pollution_data is the initial data loaded from the web
+Creating Initial table that the downloaded data will be loaded into.
+sopra.pollution_data is the initial data loaded from the web */
 
 DROP TABLE IF EXISTS sopra.clean_pollution_data;
 
@@ -13,20 +13,24 @@ CREATE TABLE IF NOT EXISTS sopra.clean_pollution_data
 		as sensor_id, *
 		from sopra.pollution_data ORDER BY LONGITUDE, LATITUDE);
 
---  following Chunk ensures that no duplicates have found there way into the dataset.
+/*following Chunk ensures that no duplicates have
+ found there way into the dataset. */
 
 DROP TABLE IF EXISTS sopra.pollution_data_distinct;
 
 CREATE TABLE IF NOT EXISTS sopra.pollution_data_distinct AS
 	(SELECT * FROM (
 			SELECT sensor_id, ozone, timestamp,
-			ROW_NUMBER() OVER(PARTITION BY sensor_id, timestamp ORDER BY sensor_id DESC) rownumber
+			ROW_NUMBER() OVER(PARTITION BY sensor_id, timestamp
+			ORDER BY sensor_id DESC) rownumber
 	FROM sopra.clean_pollution_data) Temp
 	where rownumber = 1);
 
 DROP TABLE IF EXISTS sopra.clean_pollution_data;
 
--- following chunk takes time lagged value of the observation to act as predictive features. Also takes several timestamp values to assist in predictive analytics.
+/*		following chunk takes time lagged value of the observation to act as
+predictive features. Also takes several timestamp values to
+assist in predictive analytics		*/
 
 DROP TABLE IF EXISTS sopra.preprossing1;
 
@@ -35,9 +39,12 @@ SELECT sensor_id,
 timestamp,
 DENSE_RANK() OVER( ORDER BY (CONCAT(sensor_id,timestamp))) as rank,
 Ozone,
-CAST(lag(ozone,288,0) OVER(PARTITION BY sensor_id ORDER BY timestamp)AS INT) as temp24,
-CAST(lag(ozone,576,0) OVER(PARTITION BY sensor_id ORDER BY timestamp)AS INT) as temp48,
-CAST(lag(ozone,2016,0) OVER(PARTITION BY sensor_id ORDER BY timestamp)AS INT) as temp168,
+CAST(lag(ozone,288,0)
+	OVER(PARTITION BY sensor_id ORDER BY timestamp)AS INT) as temp24,
+CAST(lag(ozone,576,0)
+	OVER(PARTITION BY sensor_id ORDER BY timestamp)AS INT) as temp48,
+CAST(lag(ozone,2016,0)
+ 	OVER(PARTITION BY sensor_id ORDER BY timestamp)AS INT) as temp168,
 DAY(timestamp) AS DayOfMonth,
 DAYOFWEEK(timestamp) AS Weekday,
 Hour(timestamp) AS Hour,
@@ -49,7 +56,8 @@ SELECT * FROM sopra.preprossing1;
 
 DROP TABLE IF EXISTS sopra.pollution_data_distinct;
 
--- Following Chunk removes all zero time lagged values which would skew any machine learning model
+/* Following Chunk removes all zero time lagged values which
+would skew any machine learning model */
 
 DROP TABLE IF EXISTS sopra.preprossing2;
 
@@ -59,20 +67,27 @@ where temp24 != 0 and temp48 !=0 and temp168!=0;
 
 DROP TABLE IF EXISTS sopra.preprossing1;
 
---following chunk normalised all time lagged values. Normalising assists with predictive analytics by making the STD.Dev of the data set 1.
+/*following chunk normalised all time lagged values.
+Normalising assists with predictive analytics by making
+ the STD.Dev of the data set 1. */
 
 DROP Model IF EXISTS Normalisation_Fit;
 
-SELECT NORMALIZE_FIT('Normalisation_Fit', 'sopra.preprossing2', 'Ozone, temp24, temp48, temp168','minmax');
+SELECT NORMALIZE_FIT('Normalisation_Fit',
+	 'sopra.preprossing2', 'Ozone, temp24, temp48, temp168','minmax');
 
 DROP TABLE IF EXISTS sopra.preprocessing_post_normal;
 
-CREATE TABLE IF NOT EXISTS sopra.preprocessing_post_normal AS SELECT APPLY_NORMALIZE (* USING PARAMETERS model_name = 'Normalisation_Fit') FROM sopra.preprossing2;
+CREATE TABLE IF NOT EXISTS sopra.preprocessing_post_normal AS
+ 	SELECT APPLY_NORMALIZE (* USING PARAMETERS model_name = 'Normalisation_Fit')
+  	FROM sopra.preprossing2;
 
 DROP TABLE IF EXISTS sopra.preprossing2;
 
 DROP TABLE IF EXISTS sopra.preprocessing_post_OHE2;
 
+
+-- Creating Un Segmented Table to Enable Table Manipulation.
 CREATE TABLE IF NOT EXISTS sopra.preprocessing_post_OHE2 as
 (select * from sopra.preprocessing_post_normal )
 UNSEGMENTED ALL NODES;

@@ -1,3 +1,8 @@
+/* This Segment contains generic drop table fucntions to bring the database
+to the end of section 2 if an erorr has occured. This section acts a psudo
+DB Refresh.
+ .*/
+
 DROP TABLE IF EXISTS sopra.DAMAGED;
 DROP TABLE IF EXISTS sopra.EXPORT;
 DROP TABLE IF EXISTS sopra.FINAL;
