@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS sopra.DAMAGED;
+DROP TABLE IF EXISTS sopra.EXPORT;
+DROP TABLE IF EXISTS sopra.FINAL;
+DROP TABLE IF EXISTS sopra.PRED;
+DROP TABLE IF EXISTS sopra.preprocessing_post_normal;
+DROP TABLE IF EXISTS sopra.preprocessing_post_OHE2;
+DROP TABLE IF EXISTS sopra.raw_pollution_data;
+DROP TABLE IF EXISTS sopra.testsample;
+DROP TABLE IF EXISTS sopra.trainsample;
+DROP TABLE IF EXISTS sopra.Train;

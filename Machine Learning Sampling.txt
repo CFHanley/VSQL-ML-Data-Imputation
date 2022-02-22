@@ -1,10 +1,8 @@
 -- Vertica SQL Machine Learning
 
 DROP TABLE IF EXISTS sopra.trainsample;
-DROP TABLE IF EXISTS sopra.testsample;
 
 CREATE TABLE sopra.trainsample AS SELECT * FROM sopra.preprocessing_post_OHE2 TABLESAMPLE(75);
-CREATE TABLE sopra.testsample AS SELECT * FROM sopra.preprocessing_post_OHE2 TABLESAMPLE(25);
 
 DROP MODEL IF EXISTS sopra.Balanced_trainsample;
 DROP VIEW IF EXISTS sopra.Balanced_trainsample;
@@ -28,6 +26,3 @@ SELECT RF_REGRESSOR('RF_reg', 'sopra.Train', 'ozone', 'sensor_id,temp24,temp48,t
                    max_breadth=1000);
 
 SELECT GET_MODEL_SUMMARY (USING PARAMETERS model_name='RF_reg');
-
-
-asas

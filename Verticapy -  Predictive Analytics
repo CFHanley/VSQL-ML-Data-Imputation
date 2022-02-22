@@ -1,1 +1,26 @@
- 
+-- Vertica Solving Problem Statement
+
+SELECT * FROM sopra.preprocessing_post_OHE2;
+
+DROP TABLE IF EXISTS sopra.DAMAGED;
+
+CREATE TABLE sopra.DAMAGED AS SELECT * FROM sopra.preprocessing_post_OHE2 TABLESAMPLE(25) UNSEGMENTED ALL NODES;
+
+SELECT * FROM sopra.DAMAGED;
+
+
+ALTER TABLE sopra.DAMAGED
+ADD COLUMN imputated BOOLEAN;
+
+ALTER TABLE sopra.DAMAGED
+Drop COLUMN Ozone cascade;
+
+Update sopra.DAMAGED
+set imputated = TRUE;
+
+SELECT * FROM sopra.DAMAGED;
+
+DROP TABLE IF EXISTS sopra.pred;
+
+CREATE TABLE sopra.pred as SELECT *, Round( PREDICT_RF_REGRESSOR (sensor_id,temp24,temp48,temp168,DayOfMonth,Weekday,Hour,Month
+USING PARAMETERS model_name='RF_reg'),3.0) FROM sopra.DAMAGED;
