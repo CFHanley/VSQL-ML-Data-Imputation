@@ -5,15 +5,15 @@
 
 DROP TABLE IF EXISTS sopra.clean_pollution_data;
 
-CREATE TABLE IF NOT EXISTS sopra.clean_pollution_data 
-	AS (select DENSE_RANK() 
+CREATE TABLE IF NOT EXISTS sopra.clean_pollution_data
+	AS (select DENSE_RANK()
 		OVER (
 			ORDER BY
 			 concat(longitude, latitude))
-		as sensor_id, * 
+		as sensor_id, *
 		from sopra.pollution_data ORDER BY LONGITUDE, LATITUDE);
 
---  following Chunk ensures that no duplicates have found there way into the dataset. 
+--  following Chunk ensures that no duplicates have found there way into the dataset.
 
 DROP TABLE IF EXISTS sopra.pollution_data_distinct;
 
@@ -32,7 +32,7 @@ DROP TABLE IF EXISTS sopra.preprossing1;
 
 
 
-CREATE TABLE IF NOT EXISTS sopra.preprossing1 AS 
+CREATE TABLE IF NOT EXISTS sopra.preprossing1 AS
 SELECT sensor_id,
 timestamp,
 DENSE_RANK() OVER( ORDER BY (CONCAT(sensor_id,timestamp))) as rank,
@@ -84,7 +84,7 @@ SELECT ONE_HOT_ENCODER_FIT('OHE_Fit', 'sopra.preprocessing_post_normal', 'DayOfM
 
 DROP TABLE IF EXISTS sopra.preprocessing_post_OHE;
 
-CREATE TABLE IF NOT EXISTS sopra.preprocessing_post_OHE AS SELECT 
+CREATE TABLE IF NOT EXISTS sopra.preprocessing_post_OHE AS SELECT
 APPLY_ONE_HOT_ENCODER( * USING PARAMETERS model_name='OHE_Fit')FROM sopra.preprocessing_post_normal;
 
 SELECT * FROM sopra.preprocessing_post_OHE;
@@ -122,7 +122,3 @@ DROP Month CASCADE;
 SELECT * FROM sopra.preprocessing_post_OHE2;
 
 */
-
-
-
-

@@ -1,0 +1,22 @@
+*/Download data from:
+http://iot.ee.surrey.ac.uk:8080/datasets.html#pollution */
+
+-- Create schema where tables will be stored:
+CREATE SCHEMA sopra
+
+--Create table which will hold the data:
+CREATE TABLE sopra.pollution_data (
+ozone float,
+particullate_matter float,
+carbon_monoxide float,
+sulfure_dioxide float,
+nitrogen_dioxide float,
+longitude float,
+latitude float,
+timestamp timestamp
+)
+
+/*
+Loading local data in via command line:
+COPY sopra.pollution_data from LOCAL '/home/dbadmin/Desktop/citypulse_pollution_csv_data_aarhus_aug_oct_2014.tar.gz' GZIP DELIMITER ',' SKIP 1;
+*/
