@@ -1,40 +1,40 @@
 /* Preprocessing SQL
 
 Creating Initial table that the downloaded data will be loaded into.
-sopra.pollution_data is the initial data loaded from the web */
+vertica.pollution_data is the initial data loaded from the web */
 
-DROP TABLE IF EXISTS sopra.clean_pollution_data;
+DROP TABLE IF EXISTS vertica.clean_pollution_data;
 
-CREATE TABLE IF NOT EXISTS sopra.clean_pollution_data
+CREATE TABLE IF NOT EXISTS vertica.clean_pollution_data
 	AS (select DENSE_RANK()
 		OVER (
 			ORDER BY
 			 concat(longitude, latitude))
 		as sensor_id, *
-		from sopra.pollution_data ORDER BY LONGITUDE, LATITUDE);
+		from vertica.pollution_data ORDER BY LONGITUDE, LATITUDE);
 
 /*following Chunk ensures that no duplicates have
  found there way into the dataset. */
 
-DROP TABLE IF EXISTS sopra.pollution_data_distinct;
+DROP TABLE IF EXISTS vertica.pollution_data_distinct;
 
-CREATE TABLE IF NOT EXISTS sopra.pollution_data_distinct AS
+CREATE TABLE IF NOT EXISTS vertica.pollution_data_distinct AS
 	(SELECT * FROM (
 			SELECT sensor_id, ozone, timestamp,
 			ROW_NUMBER() OVER(PARTITION BY sensor_id, timestamp
 			ORDER BY sensor_id DESC) rownumber
-	FROM sopra.clean_pollution_data) Temp
+	FROM vertica.clean_pollution_data) Temp
 	where rownumber = 1);
 
-DROP TABLE IF EXISTS sopra.clean_pollution_data;
+DROP TABLE IF EXISTS vertica.clean_pollution_data;
 
 /*		following chunk takes time lagged value of the observation to act as
 predictive features. Also takes several timestamp values to
 assist in predictive analytics		*/
 
-DROP TABLE IF EXISTS sopra.preprossing1;
+DROP TABLE IF EXISTS vertica.preprossing1;
 
-CREATE TABLE IF NOT EXISTS sopra.preprossing1 AS
+CREATE TABLE IF NOT EXISTS vertica.preprossing1 AS
 SELECT sensor_id,
 timestamp,
 DENSE_RANK() OVER( ORDER BY (CONCAT(sensor_id,timestamp))) as rank,
@@ -49,23 +49,23 @@ DAY(timestamp) AS DayOfMonth,
 DAYOFWEEK(timestamp) AS Weekday,
 Hour(timestamp) AS Hour,
 Month(timestamp) AS Month
-from sopra.pollution_data_distinct
+from vertica.pollution_data_distinct
 order by rank;
 
-SELECT * FROM sopra.preprossing1;
+SELECT * FROM vertica.preprossing1;
 
-DROP TABLE IF EXISTS sopra.pollution_data_distinct;
+DROP TABLE IF EXISTS vertica.pollution_data_distinct;
 
 /* Following Chunk removes all zero time lagged values which
 would skew any machine learning model */
 
-DROP TABLE IF EXISTS sopra.preprossing2;
+DROP TABLE IF EXISTS vertica.preprossing2;
 
-Create Table IF NOT EXISTS sopra.preprossing2 AS SELECT *
-from sopra.preprossing1
+Create Table IF NOT EXISTS vertica.preprossing2 AS SELECT *
+from vertica.preprossing1
 where temp24 != 0 and temp48 !=0 and temp168!=0;
 
-DROP TABLE IF EXISTS sopra.preprossing1;
+DROP TABLE IF EXISTS vertica.preprossing1;
 
 /*following chunk normalised all time lagged values.
 Normalising assists with predictive analytics by making
@@ -74,22 +74,22 @@ Normalising assists with predictive analytics by making
 DROP Model IF EXISTS Normalisation_Fit;
 
 SELECT NORMALIZE_FIT('Normalisation_Fit',
-	 'sopra.preprossing2', 'Ozone, temp24, temp48, temp168','minmax');
+	 'vertica.preprossing2', 'Ozone, temp24, temp48, temp168','minmax');
 
-DROP TABLE IF EXISTS sopra.preprocessing_post_normal;
+DROP TABLE IF EXISTS vertica.preprocessing_post_normal;
 
-CREATE TABLE IF NOT EXISTS sopra.preprocessing_post_normal AS
+CREATE TABLE IF NOT EXISTS vertica.preprocessing_post_normal AS
  	SELECT APPLY_NORMALIZE (* USING PARAMETERS model_name = 'Normalisation_Fit')
-  	FROM sopra.preprossing2;
+  	FROM vertica.preprossing2;
 
-DROP TABLE IF EXISTS sopra.preprossing2;
+DROP TABLE IF EXISTS vertica.preprossing2;
 
-DROP TABLE IF EXISTS sopra.preprocessing_post_OHE2;
+DROP TABLE IF EXISTS vertica.preprocessing_post_OHE2;
 
 
 -- Creating Un Segmented Table to Enable Table Manipulation.
-CREATE TABLE IF NOT EXISTS sopra.preprocessing_post_OHE2 as
-(select * from sopra.preprocessing_post_normal )
+CREATE TABLE IF NOT EXISTS vertica.preprocessing_post_OHE2 as
+(select * from vertica.preprocessing_post_normal )
 UNSEGMENTED ALL NODES;
 
-DROP TABLE IF EXISTS sopra.preprocessing_post_OHE;
+DROP TABLE IF EXISTS vertica.preprocessing_post_OHE;

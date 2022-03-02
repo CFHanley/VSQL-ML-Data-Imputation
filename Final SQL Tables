@@ -3,36 +3,36 @@ In a real example. the join or append would be highly dependant on the
 use case. The current solution works for the current use case.
 .*/
 
-DROP TABLE IF EXISTS sopra.final;
+DROP TABLE IF EXISTS vertica.final;
 
-CREATE TABLE IF NOT EXISTS sopra.final
+CREATE TABLE IF NOT EXISTS vertica.final
 	AS
-	(SELECT sopra.preprocessing_post_OHE2.*,
-		 sopra.pred.Round,sopra.pred.imputated
-   FROM sopra.preprocessing_post_OHE2
+	(SELECT vertica.preprocessing_post_OHE2.*,
+		 vertica.pred.Round,vertica.pred.imputated
+   FROM vertica.preprocessing_post_OHE2
 	  LEFT JOIN
-	  sopra.pred ON sopra.pred.rank = sopra.preprocessing_post_OHE2.rank);
+	  vertica.pred ON vertica.pred.rank = vertica.preprocessing_post_OHE2.rank);
 
-	 SELECT * FROM sopra.final;
+	 SELECT * FROM vertica.final;
 
 
  /* This Segment is overwriting predictive datapoints over the actual
   datapoints.In a real case it would be overwriting errors or Nulls most likely.
 	.*/
 
-UPDATE sopra.final
+UPDATE vertica.final
 SET Ozone = CASE WHEN final.imputated IS NULL THEN Ozone
 ELSE round END ;
 
-DROP TABLE IF EXISTS sopra.export;
+DROP TABLE IF EXISTS vertica.export;
 
 
 /* This Segment is applying REVERSE_NORMALIZE to undo the
  NORMALIZE_FIT applied in section 3. This turns the Co2 data back into
- human readable formatting for analysis and visualisation. 
+ human readable formatting for analysis and visualisation.
  .*/
-Create TABLE IF NOT EXISTS sopra.export as
+Create TABLE IF NOT EXISTS vertica.export as
 	(SELECT REVERSE_NORMALIZE
 		(Sensor_id, timestamp, imputated, Ozone
 			USING PARAMETERS  model_name = 'Normalisation_Fit')
-			FROM sopra.final);
+			FROM vertica.final);

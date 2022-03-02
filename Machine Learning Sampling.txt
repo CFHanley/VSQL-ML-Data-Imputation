@@ -1,29 +1,29 @@
 /* This Segment is taking a sample of the total database in order to
 fit a random forest model */
 
-DROP TABLE IF EXISTS sopra.trainsample;
+DROP TABLE IF EXISTS vertica.trainsample;
 
-CREATE TABLE sopra.trainsample AS
-  SELECT * FROM sopra.preprocessing_post_OHE2 TABLESAMPLE(75);
+CREATE TABLE vertica.trainsample AS
+  SELECT * FROM vertica.preprocessing_post_OHE2 TABLESAMPLE(75);
 
 
 /* This Segment is balancing the sample - EG Making sure there is an equal
 count of observations from each sensor, this reducing poissble biases in the
 predictive model */
 
-DROP MODEL IF EXISTS sopra.Balanced_trainsample;
-DROP VIEW IF EXISTS sopra.Balanced_trainsample;
+DROP MODEL IF EXISTS vertica.Balanced_trainsample;
+DROP VIEW IF EXISTS vertica.Balanced_trainsample;
 
-SELECT BALANCE('sopra.Balanced_trainsample',
-   'sopra.trainsample',
+SELECT BALANCE('vertica.Balanced_trainsample',
+   'vertica.trainsample',
    'sensor_id',
    'weighted_sampling');
 
 DROP MODEL IF EXISTS RF_reg;
 
-DROP TABLE IF EXISTS sopra.Train;
+DROP TABLE IF EXISTS vertica.Train;
 
-CREATE TABLE sopra.Train AS
+CREATE TABLE vertica.Train AS
   SELECT sensor_id,
     Ozone,
     temp24,
@@ -33,15 +33,15 @@ CREATE TABLE sopra.Train AS
     Weekday,
     Hour,
     Month
-    FROM sopra.Balanced_trainsample;
+    FROM vertica.Balanced_trainsample;
 
-SELECT * FROM sopra.Train;
+SELECT * FROM vertica.Train;
 
 /* This Segment is training/fitting the model - Finding the PARAMETERS to
  predict  a value to minimise total error. */
 
 SELECT RF_REGRESSOR('RF_reg',
-   'sopra.Train',
+   'vertica.Train',
     'ozone',
      'sensor_id,
      temp24,

@@ -3,13 +3,13 @@ to the end of section 2 if an erorr has occured. This section acts a psudo
 DB Refresh.
  .*/
 
-DROP TABLE IF EXISTS sopra.DAMAGED;
-DROP TABLE IF EXISTS sopra.EXPORT;
-DROP TABLE IF EXISTS sopra.FINAL;
-DROP TABLE IF EXISTS sopra.PRED;
-DROP TABLE IF EXISTS sopra.preprocessing_post_normal;
-DROP TABLE IF EXISTS sopra.preprocessing_post_OHE2;
-DROP TABLE IF EXISTS sopra.raw_pollution_data;
-DROP TABLE IF EXISTS sopra.testsample;
-DROP TABLE IF EXISTS sopra.trainsample;
-DROP TABLE IF EXISTS sopra.Train;
+DROP TABLE IF EXISTS vertica.DAMAGED;
+DROP TABLE IF EXISTS vertica.EXPORT;
+DROP TABLE IF EXISTS vertica.FINAL;
+DROP TABLE IF EXISTS vertica.PRED;
+DROP TABLE IF EXISTS vertica.preprocessing_post_normal;
+DROP TABLE IF EXISTS vertica.preprocessing_post_OHE2;
+DROP TABLE IF EXISTS vertica.raw_pollution_data;
+DROP TABLE IF EXISTS vertica.testsample;
+DROP TABLE IF EXISTS vertica.trainsample;
+DROP TABLE IF EXISTS vertica.Train;

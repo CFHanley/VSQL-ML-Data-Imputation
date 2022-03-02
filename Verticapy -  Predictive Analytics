@@ -1,27 +1,27 @@
 /* This Segment is simulating a sample of the dataset that have been
 lost/corrupted, or just unknown in a real example.*/
-DROP TABLE IF EXISTS sopra.DAMAGED;
+DROP TABLE IF EXISTS vertica.DAMAGED;
 
-CREATE TABLE sopra.DAMAGED AS
-  SELECT * FROM sopra.preprocessing_post_OHE2 TABLESAMPLE(25)
+CREATE TABLE vertica.DAMAGED AS
+  SELECT * FROM vertica.preprocessing_post_OHE2 TABLESAMPLE(25)
     UNSEGMENTED ALL NODES;
 
-ALTER TABLE sopra.DAMAGED
+ALTER TABLE vertica.DAMAGED
 ADD COLUMN imputated BOOLEAN;
 
-ALTER TABLE sopra.DAMAGED
+ALTER TABLE vertica.DAMAGED
 Drop COLUMN Ozone cascade;
 
-Update sopra.DAMAGED
+Update vertica.DAMAGED
 set imputated = TRUE;
 
 /* This Segment is predicting the expected value of Co2 emission
  for each sample at the noted time timestamp
 .*/
 
-DROP TABLE IF EXISTS sopra.pred;
+DROP TABLE IF EXISTS vertica.pred;
 
-CREATE TABLE sopra.pred as SELECT *,
+CREATE TABLE vertica.pred as SELECT *,
 Round( PREDICT_RF_REGRESSOR (sensor_id,
   temp24,
   temp48,
@@ -30,4 +30,4 @@ Round( PREDICT_RF_REGRESSOR (sensor_id,
   Weekday,
   Hour,
   Month
-USING PARAMETERS model_name='RF_reg'),3.0) FROM sopra.DAMAGED;
+USING PARAMETERS model_name='RF_reg'),3.0) FROM vertica.DAMAGED;

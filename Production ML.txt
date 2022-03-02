@@ -1,32 +1,32 @@
 -- Vertica Solving Problem Statement
 
-SELECT * FROM sopra.preprocessing_post_OHE2;
+SELECT * FROM vertica.preprocessing_post_OHE2;
 
-DROP TABLE IF EXISTS sopra.DAMAGED;
+DROP TABLE IF EXISTS vertica.DAMAGED;
 
-CREATE TABLE sopra.DAMAGED AS SELECT * FROM sopra.preprocessing_post_OHE2 TABLESAMPLE(25) UNSEGMENTED ALL NODES;
+CREATE TABLE vertica.DAMAGED AS SELECT * FROM vertica.preprocessing_post_OHE2 TABLESAMPLE(25) UNSEGMENTED ALL NODES;
 
-SELECT * FROM sopra.DAMAGED;
+SELECT * FROM vertica.DAMAGED;
 
 
-ALTER TABLE sopra.DAMAGED 
+ALTER TABLE vertica.DAMAGED
 ADD COLUMN imputated BOOLEAN;
 
-ALTER TABLE sopra.DAMAGED 
+ALTER TABLE vertica.DAMAGED
 Drop COLUMN Ozone cascade;
 
-Update sopra.DAMAGED 
+Update vertica.DAMAGED
 set imputated = TRUE;
 
-SELECT * FROM sopra.DAMAGED; 
+SELECT * FROM vertica.DAMAGED;
 
-DROP TABLE IF EXISTS sopra.pred;
+DROP TABLE IF EXISTS vertica.pred;
 
-CREATE TABLE sopra.pred as SELECT *, Round( PREDICT_RF_REGRESSOR (sensor_id,temp24,temp48,temp168,DayOfMonth,Weekday,Hour,Month
-USING PARAMETERS model_name='RF_reg'),3.0) FROM sopra.DAMAGED;
+CREATE TABLE vertica.pred as SELECT *, Round( PREDICT_RF_REGRESSOR (sensor_id,temp24,temp48,temp168,DayOfMonth,Weekday,Hour,Month
+USING PARAMETERS model_name='RF_reg'),3.0) FROM vertica.DAMAGED;
 
-SELECT * FROM sopra.preprocessing_post_OHE2 LEFT JOIN sopra.pred ON sopra.preprocessing_post_OHE2.rank = sopra.pred.rank; 
+SELECT * FROM vertica.preprocessing_post_OHE2 LEFT JOIN vertica.pred ON vertica.preprocessing_post_OHE2.rank = vertica.pred.rank;
 
-SELECT * FROM sopra.preprocessing_post_OHE2;
+SELECT * FROM vertica.preprocessing_post_OHE2;
 
-Select * From sopra.pred;
+Select * From vertica.pred;
